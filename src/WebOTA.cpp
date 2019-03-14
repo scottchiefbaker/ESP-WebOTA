@@ -112,20 +112,17 @@ int init_wifi(const char *ssid, const char *password, const char *mdns_hostname)
 int init_web_ota(WebServer *server) {
 	// Login page
 	server->on("/", HTTP_GET, [server]() {
-		server->sendHeader("Connection", "close");
 		server->send(200, "text/html", indexPage);
 	});
 
 	// Upload firmware page
 	server->on("/webota", HTTP_GET, [server]() {
-		server->sendHeader("Connection", "close");
 		String ota_html = get_ota_html();
 		server->send(200, "text/html", ota_html.c_str());
 	});
 
 	// Handling uploading firmware file
 	server->on("/update", HTTP_POST, [server]() {
-		server->sendHeader("Connection", "close");
 		server->send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
 		ESP.restart();
 	}, [server]() {
