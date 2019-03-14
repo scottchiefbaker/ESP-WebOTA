@@ -16,7 +16,7 @@ Create a global variable for the Web Server:
 Initialize the WebOTA library at the end of your `setup()` function:
 
     void setup() {
-        // Other init code here
+        // Other init code here (WiFi, etc)
 
         init_web_ota(&OTAServer);
     }
@@ -29,9 +29,11 @@ Listen for update requests at the end of your `loop()` function:
         OTAServer.handleClient();
     }
 
-## Perform an update
+**Note:** If you have long `delay()` commands in your `loop()` WebOTA may not be responsive.
 
-Navigate to your ESP32 in a web browser, typical URLs are: http://esp32-ota.local:8080/webota. To create a binary image you will need the Arduino IDE. A binary image can be created by going the `Sketch` menu and selecting `Export compiled Binary`.
+## Upload a sketch
+
+Navigate to your ESP32 in a web browser, typical URLs are: http://esp32-ota.local:8080/webota. You will need to create a binary sketch image to upload. This is done in the Arduino IDE by going to the `Sketch` menu and selecting `Export compiled Binary`.
 
 ## Based on
 
