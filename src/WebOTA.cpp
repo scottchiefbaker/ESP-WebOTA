@@ -1,6 +1,6 @@
 // Arduino build process info: https://github.com/arduino/Arduino/wiki/Build-Process
 
-const char *WEBOTA_VERSION = "0.1.0";
+const char *WEBOTA_VERSION = "0.1.2";
 
 #include <Arduino.h>
 #include <WiFi.h>
