@@ -26,7 +26,7 @@ String get_ota_html() {
 	ota_html += "</form>\n";
 	ota_html += "\n";
 	ota_html += "<div id=\"prg_wrap\" style=\"border: 0px solid; width: 100%;\">\n";
-	ota_html += "   <div id=\"prg\" style=\"display: none; border: 1px solid #008aff; background: #002180; text-align: center; color: white;\"></div>\n";
+	ota_html += "   <div id=\"prg\" style=\"text-shadow: 2px 2px 3px black; padding: 5px 0; display: none; border: 1px solid #008aff; background: #002180; text-align: center; color: white;\"></div>\n";
 	ota_html += "</div>\n";
 	ota_html += "\n";
 	ota_html += "<script>\n";
