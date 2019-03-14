@@ -148,3 +148,16 @@ int init_web_ota(WebServer *server) {
 
 	server->begin();
 }
+
+// If the MCU is in a delay() it cannot respond to HTTP OTA requests
+// We do a "fake" looping delay and listen for incoming HTTP requests while waiting
+void webota_delay(int ms) {
+	int last = millis();
+
+	extern WebServer OTAServer;
+
+	while ((millis() - last) < ms) {
+		OTAServer.handleClient();
+		delay(5);
+	}
+}
