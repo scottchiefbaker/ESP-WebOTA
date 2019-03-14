@@ -20,12 +20,12 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
-	int md = 200;
+	int md = 1000;
 
 	digitalWrite(LED_PIN, HIGH);
-	delay(md);
+	webota_delay(md);
 	digitalWrite(LED_PIN, LOW);
-	delay(md);
+	webota_delay(md);
 
 	OTAServer.handleClient();
 }
