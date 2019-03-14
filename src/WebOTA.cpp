@@ -161,3 +161,13 @@ void webota_delay(int ms) {
 		delay(5);
 	}
 }
+
+// Accept the HTTP server as a pointer
+void webota_delay(int ms, WebServer *HTTPServer) {
+	int last = millis();
+
+	while ((millis() - last) < ms) {
+		HTTPServer->handleClient();
+		delay(5);
+	}
+}
