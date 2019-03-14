@@ -29,11 +29,13 @@ Listen for update requests at the end of your `loop()` function:
         OTAServer.handleClient();
     }
 
-**Note:** If you have long `delay()` commands in your `loop()` WebOTA may not be responsive.
+**Note:** If you have long `delay()` commands in your `loop()` WebOTA may not be responsive. We have provided `webota_delay()` as a drop-in replacement, which is more WebOTA friendly.
 
 ## Upload a sketch
 
-Navigate to your ESP32 in a web browser, typical URLs are: http://esp32-ota.local:8080/webota. You will need to create a binary sketch image to upload. This is done in the Arduino IDE by going to the `Sketch` menu and selecting `Export compiled Binary`.
+You will need to create a binary sketch image to upload. This is done in the Arduino IDE by going to the `Sketch` menu and selecting `Export compiled Binary`.
+
+Navigate to your ESP32 in a web browser to upload your binary image. Typical URLs are: http://esp32-ota.local:8080/webota.
 
 ## Based on
 
