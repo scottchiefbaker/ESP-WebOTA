@@ -126,6 +126,8 @@ int init_web_ota(WebServer *server) {
 		server->send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
 		ESP.restart();
 	}, [server]() {
+		static uint32_t next = 102400;
+
 		HTTPUpload& upload = server->upload();
 		if (upload.status == UPLOAD_FILE_START) {
 			Serial.printf("Firmware update initiated: %s\r\n", upload.filename.c_str());
@@ -137,9 +139,14 @@ int init_web_ota(WebServer *server) {
 			if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
 				Update.printError(Serial);
 			}
+
+			if (upload.totalSize >= next) {
+				Serial.printf("%dk ", next / 1024);
+				next += 102400;
+			}
 		} else if (upload.status == UPLOAD_FILE_END) {
 			if (Update.end(true)) { //true to set the size to the current progress
-				Serial.printf("Firmware update successful: %u bytes\r\nRebooting...\r\n", upload.totalSize);
+				Serial.printf("\r\nFirmware update successful: %u bytes\r\nRebooting...\r\n", upload.totalSize);
 			} else {
 				Update.printError(Serial);
 			}
