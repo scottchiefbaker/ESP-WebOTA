@@ -20,7 +20,7 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
-	int md = 1000;
+	int md = 200;
 
 	digitalWrite(LED_PIN, HIGH);
 	delay(md);
