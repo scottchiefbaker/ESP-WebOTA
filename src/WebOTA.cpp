@@ -3,15 +3,27 @@
 const char *WEBOTA_VERSION = "0.1.4";
 
 #include <Arduino.h>
-#include <WiFi.h>
 #include <WiFiClient.h>
+
+#ifdef ESP32
+#include <WebServer.h>
 #include <ESPmDNS.h>
 #include <Update.h>
-#include <WebServer.h>
+#include <WiFi.h>
+
+WebServer OTAServer(9999);
+#endif
+
+#ifdef ESP8266
+#include <ESP8266WebServer.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
+
+ESP8266WebServer OTAServer(9999);
+#endif
 
 // Global WebServer object
 // Starts on a bogus port (we change it later)
-WebServer OTAServer(9999);
 
 // Track whether the init has run (only run it once)
 bool INIT_RUN = false;
@@ -134,7 +146,12 @@ int init_wifi(const char *ssid, const char *password, const char *mdns_hostname)
 	strcpy(MDNS_GLOBAL, mdns_hostname); // Store the mDNS name for later
 }
 
+#ifdef ESP8266
+int add_http_routes(ESP8266WebServer *server, const char *path) {
+#endif
+#ifdef ESP32
 int add_http_routes(WebServer *server, const char *path) {
+#endif
 	// Index page
 	server->on("/", HTTP_GET, [server]() {
 		server->send(200, "text/html", indexPage);

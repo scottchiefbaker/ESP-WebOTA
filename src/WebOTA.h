@@ -1,7 +1,14 @@
+#ifdef ESP32
 #include <WebServer.h>
+extern WebServer OTAServer;
+#endif
+
+#ifdef ESP8266
+#include <ESP8266WebServer.h>
+extern ESP8266WebServer OTAServer;
+#endif
 
 extern const char *WEBOTA_VERSION;
-extern WebServer OTAServer;
 
 int init_wifi(const char *ssid, const char *password, const char *mdns_hostname);
 int init_wifi(const char *ssid, const char *password);
