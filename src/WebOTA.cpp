@@ -20,6 +20,12 @@ char MDNS_GLOBAL[30];
 // Index page
 const char* indexPage = "<h1>WebOTA</h1>";
 
+long max_sketch_size() {
+	long ret = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+
+	return ret;
+}
+
 // Get the HTML for the sketch upload page
 String get_ota_html() {
 	String ota_html = "";
@@ -31,6 +37,7 @@ String get_ota_html() {
 	ota_html += "    <input type=\"submit\" value=\"Update\">\n";
 	ota_html += "</form>\n";
 	ota_html += "\n";
+	ota_html += "<div style=\"font-size: 75%;\">Max sketch size: " + (String)max_sketch_size() + "</div>\n";
 	ota_html += "<div id=\"prg_wrap\" style=\"border: 0px solid; width: 100%;\">\n";
 	ota_html += "   <div id=\"prg\" style=\"text-shadow: 2px 2px 3px black; padding: 5px 0; display: none; border: 1px solid #008aff; background: #002180; text-align: center; color: white;\"></div>\n";
 	ota_html += "</div>\n";
@@ -148,7 +155,11 @@ int add_http_routes(WebServer *server, const char *path) {
 
 		if (upload.status == UPLOAD_FILE_START) {
 			Serial.printf("Firmware update initiated: %s\r\n", upload.filename.c_str());
-			if (!Update.begin(UPDATE_SIZE_UNKNOWN)) { //start with max available size
+
+			//uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+			uint32_t maxSketchSpace = max_sketch_size();
+
+			if (!Update.begin(maxSketchSpace)) { //start with max available size
 				Update.printError(Serial);
 			}
 		} else if (upload.status == UPLOAD_FILE_WRITE) {
