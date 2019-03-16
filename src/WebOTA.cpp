@@ -9,19 +9,18 @@ const char *WEBOTA_VERSION = "0.1.3";
 #include <Update.h>
 #include <WebServer.h>
 
+WebServer OTAServer(8080);
+
 // Index page
 const char* indexPage = "<h1>ESP32 Index</h1>";
 
-// WebOTA Page
 String get_ota_html() {
 	String ota_html = "";
 
-	ota_html += "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js\"></script>\n";
-	ota_html += "\n";
 	ota_html += "<h1>WebOTA Version: " + (String) WEBOTA_VERSION + "</h1>\n";
 	ota_html += "\n";
 	ota_html += "<form method=\"POST\" action=\"#\" enctype=\"multipart/form-data\" id=\"upload_form\">\n";
-	ota_html += "    <input type=\"file\" name=\"update\">\n";
+	ota_html += "    <input type=\"file\" name=\"update\" id=\"file\">\n";
 	ota_html += "    <input type=\"submit\" value=\"Update\">\n";
 	ota_html += "</form>\n";
 	ota_html += "\n";
@@ -30,33 +29,48 @@ String get_ota_html() {
 	ota_html += "</div>\n";
 	ota_html += "\n";
 	ota_html += "<script>\n";
-	ota_html += "$(\"form\").submit(function(e){\n";
-	ota_html += "    e.preventDefault();\n";
-	ota_html += "    var form = $(\"#upload_form\")[0];\n";
-	ota_html += "    var data = new FormData(form);\n";
+	ota_html += "var domReady = function(callback) {\n";
+	ota_html += "	document.readyState === \"interactive\" || document.readyState === \"complete\" ? callback() : document.addEventListener(\"DOMContentLoaded\", callback);\n";
+	ota_html += "};\n";
 	ota_html += "\n";
-	ota_html += "    $.ajax({\n";
-	ota_html += "        url: \"/update\",\n";
-	ota_html += "        type: \"POST\",\n";
-	ota_html += "        data: data,\n";
-	ota_html += "        contentType: false,\n";
-	ota_html += "        processData:false,\n";
-	ota_html += "        xhr: function() {\n";
-	ota_html += "            var xhr = new window.XMLHttpRequest();\n";
-	ota_html += "            xhr.upload.addEventListener(\"progress\", function(evt) {\n";
-	ota_html += "                if (evt.lengthComputable) {\n";
-	ota_html += "                    var per = Math.round((evt.loaded / evt.total) * 100);\n";
-	ota_html += "                    $(\"#prg\").html(per + \"%\").css(\"width\", per + \"%\").show();\n";
-	ota_html += "                }\n";
-	ota_html += "            }, false);\n";
+	ota_html += "domReady(function() {\n";
+	ota_html += "	var myform = document.getElementById('upload_form');\n";
+	ota_html += "	var filez  = document.getElementById('file');\n";
 	ota_html += "\n";
-	ota_html += "            return xhr;\n";
-	ota_html += "        },\n";
-	ota_html += "        success:function(d, s) {\n";
-	ota_html += "            console.log(\"success!\")\n";
-	ota_html += "        },\n";
-	ota_html += "        error: function (a, b, c) {}\n";
-	ota_html += "    });\n";
+	ota_html += "	myform.onsubmit = function(event) {\n";
+	ota_html += "		event.preventDefault();\n";
+	ota_html += "\n";
+	ota_html += "		var formData = new FormData();\n";
+	ota_html += "		var file     = filez.files[0];\n";
+	ota_html += "\n";
+	ota_html += "		if (!file) { return false; }\n";
+	ota_html += "\n";
+	ota_html += "		formData.append(\"files\", file, file.name);\n";
+	ota_html += "\n";
+	ota_html += "		var xhr = new XMLHttpRequest();\n";
+	ota_html += "		xhr.upload.addEventListener(\"progress\", function(evt) {\n";
+	ota_html += "			if (evt.lengthComputable) {\n";
+	ota_html += "				var per = Math.round((evt.loaded / evt.total) * 100);\n";
+	ota_html += "				var prg = document.getElementById('prg');\n";
+	ota_html += "\n";
+	ota_html += "				prg.innerHTML     = per + \"%\"\n";
+	ota_html += "				prg.style.width   = per + \"%\"\n";
+	ota_html += "				prg.style.display = \"block\"\n";
+	ota_html += "			}\n";
+	ota_html += "		}, false);\n";
+	ota_html += "		xhr.open('POST', location.href, true);\n";
+	ota_html += "\n";
+	ota_html += "		// Set up a handler for when the request finishes.\n";
+	ota_html += "		xhr.onload = function () {\n";
+	ota_html += "			if (xhr.status === 200) {\n";
+	ota_html += "				//alert('Success');\n";
+	ota_html += "			} else {\n";
+	ota_html += "				//alert('An error occurred!');\n";
+	ota_html += "			}\n";
+	ota_html += "		};\n";
+	ota_html += "\n";
+	ota_html += "		xhr.send(formData);\n";
+	ota_html += "   }\n";
 	ota_html += "});\n";
 	ota_html += "</script>\n";
 
