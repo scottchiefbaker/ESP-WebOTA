@@ -3,13 +3,14 @@ const char* ssid     = "ssid";
 const char* password = "password";
 
 #include <WebOTA.h>
-WebServer OTAServer(8080);
 
 void setup() {
 	Serial.begin(115200);
 
 	init_wifi(ssid, password, host);
-    init_web_ota(&OTAServer);
+
+	// Defaults to 8080 and "/webota"
+	//init_webota(80, "/update");
 }
 
 int offset = 0;
@@ -32,5 +33,5 @@ void loop() {
 
 	if (offset >= len) { offset = 0; }
 
-    OTAServer.handleClient();
+    handle_webota();
 }

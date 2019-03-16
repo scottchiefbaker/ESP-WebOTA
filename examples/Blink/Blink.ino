@@ -3,7 +3,6 @@ const char* ssid     = "ssid";
 const char* password = "password";
 
 #include <WebOTA.h>
-WebServer OTAServer(8080);
 
 #define LED_PIN 2
 
@@ -15,7 +14,9 @@ void setup() {
 	pinMode(LED_PIN, OUTPUT);
 
 	init_wifi(ssid, password, host);
-	init_web_ota(&OTAServer);
+
+	// Defaults to 8080 and "/webota"
+	//init_webota(80, "/update");
 }
 
 // the loop function runs over and over again forever
@@ -27,5 +28,5 @@ void loop() {
 	digitalWrite(LED_PIN, LOW);
 	webota_delay(md);
 
-	OTAServer.handleClient();
+	handle_webota();
 }
