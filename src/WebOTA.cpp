@@ -9,11 +9,18 @@ const char *WEBOTA_VERSION = "0.1.3";
 #include <Update.h>
 #include <WebServer.h>
 
-WebServer OTAServer(8080);
+// Global WebServer object
+// Starts on a bogus port (we change it later)
+WebServer OTAServer(9999);
+
+// Track whether the init has run (only run it once)
+bool INIT_RUN = false;
+char MDNS_GLOBAL[30];
 
 // Index page
-const char* indexPage = "<h1>ESP32 Index</h1>";
+const char* indexPage = "<h1>WebOTA</h1>";
 
+// Get the HTML for the sketch upload page
 String get_ota_html() {
 	String ota_html = "";
 
@@ -84,19 +91,20 @@ String ip2string(IPAddress ip) {
 }
 
 int init_mdns(const char *host) {
-	/*use mdns for host name resolution*/
-	if (!MDNS.begin(host)) { //http://esp32.local
+	// Use mdns for host name resolution
+	if (!MDNS.begin(host)) {
 		Serial.println("Error setting up MDNS responder!");
-		while (1) {
-			delay(1000);
-		}
+
+		return 0;
 	}
 
 	Serial.printf("mDNS started : %s\r\n", host);
+
+	return 1;
 }
 
 int init_wifi(const char *ssid, const char *password, const char *mdns_hostname) {
-	// Connect to WiFi network
+	WiFi.mode(WIFI_STA);
 	WiFi.begin(ssid, password);
 
 	Serial.println("");
@@ -109,40 +117,35 @@ int init_wifi(const char *ssid, const char *password, const char *mdns_hostname)
 	}
 
 	Serial.println("");
-
 	Serial.printf("Connected to '%s'\r\n\r\n",ssid);
 
 	String ipaddr = ip2string(WiFi.localIP());
 	Serial.printf("IP address   : %s\r\n", ipaddr.c_str());
-
-	//String macAddr = mac2string(WiFi.macAddress());
 	Serial.printf("MAC address  : %s \r\n", WiFi.macAddress().c_str());
 
 	init_mdns(mdns_hostname);
-
-	Serial.printf("WebOTA url   : http://%s.local:%d/webota\r\n\r\n", mdns_hostname, 8080);
+	strcpy(MDNS_GLOBAL, mdns_hostname); // Store the mDNS name for later
 }
 
-int init_web_ota(WebServer *server) {
-	// Login page
+int add_http_routes(WebServer *server, const char *path) {
+	// Index page
 	server->on("/", HTTP_GET, [server]() {
 		server->send(200, "text/html", indexPage);
 	});
 
 	// Upload firmware page
-	server->on("/webota", HTTP_GET, [server]() {
+	server->on(path, HTTP_GET, [server]() {
 		String ota_html = get_ota_html();
 		server->send(200, "text/html", ota_html.c_str());
 	});
 
 	// Handling uploading firmware file
-	server->on("/update", HTTP_POST, [server]() {
+	server->on(path, HTTP_POST, [server]() {
 		server->send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
 		ESP.restart();
 	}, [server]() {
-		static uint32_t next = 102400;
-
 		HTTPUpload& upload = server->upload();
+
 		if (upload.status == UPLOAD_FILE_START) {
 			Serial.printf("Firmware update initiated: %s\r\n", upload.filename.c_str());
 			if (!Update.begin(UPDATE_SIZE_UNKNOWN)) { //start with max available size
@@ -154,9 +157,14 @@ int init_web_ota(WebServer *server) {
 				Update.printError(Serial);
 			}
 
+			// Store the next milestone to output
+			uint16_t chunk_size  = 51200;
+			static uint32_t next = 51200;
+
+			// Check if we need to output a milestone (100k 200k 300k)
 			if (upload.totalSize >= next) {
 				Serial.printf("%dk ", next / 1024);
-				next += 102400;
+				next += chunk_size;
 			}
 		} else if (upload.status == UPLOAD_FILE_END) {
 			if (Update.end(true)) { //true to set the size to the current progress
@@ -170,12 +178,35 @@ int init_web_ota(WebServer *server) {
 	server->begin();
 }
 
+// Configure the HTTP routes and start the web server
+void init_webota(const int port, const char *path) {
+	if (INIT_RUN == true) {
+		return;
+	}
+
+	add_http_routes(&OTAServer, path);
+	OTAServer.begin(port);
+
+	Serial.printf("WebOTA url   : http://%s.local:%d%s\r\n\r\n", MDNS_GLOBAL, port, path);
+
+	// Store that init has already run
+	INIT_RUN = true;
+}
+
+// One param
+void init_webota(const int port) {
+	init_webota(port, "/webota");
+}
+
+// No params
+void init_webota() {
+	init_webota(8080, "/webota");
+}
+
 // If the MCU is in a delay() it cannot respond to HTTP OTA requests
 // We do a "fake" looping delay and listen for incoming HTTP requests while waiting
 void webota_delay(int ms) {
 	int last = millis();
-
-	extern WebServer OTAServer;
 
 	while ((millis() - last) < ms) {
 		OTAServer.handleClient();
@@ -183,12 +214,12 @@ void webota_delay(int ms) {
 	}
 }
 
-// Accept the HTTP server as a pointer
-void webota_delay(int ms, WebServer *HTTPServer) {
-	int last = millis();
-
-	while ((millis() - last) < ms) {
-		HTTPServer->handleClient();
-		delay(5);
+// This is the part that goes in loop() to listen for requests
+// If init hasn't run, it will run it
+int handle_webota() {
+	if (INIT_RUN == false) {
+		init_webota();
 	}
+
+	OTAServer.handleClient();
 }
