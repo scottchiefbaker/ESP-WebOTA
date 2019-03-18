@@ -1,6 +1,6 @@
 # ESP WebOTA
 
-Easily add web based [OTA](https://en.wikipedia.org/wiki/Over-the-air_programming) updates to your ESP32 projects.
+Easily add web based [OTA](https://en.wikipedia.org/wiki/Over-the-air_programming) updates to your ESP32/ESP8266 projects.
 
 ## Installation
 
@@ -36,7 +36,7 @@ Listen for update requests at the end of your `loop()` function:
 
 You will need to create a binary sketch image to upload. This is done in the Arduino IDE by going to the `Sketch` menu and selecting `Export compiled Binary`.
 
-Navigate to your ESP32 in a web browser to upload your binary image. Typical URLs are: http://esp32-ota.local:8080/webota.
+Navigate to your ESP in a web browser to upload your binary image. Typical URLs are: http://esp-ota.local:8080/webota.
 
 ## Based on
 
