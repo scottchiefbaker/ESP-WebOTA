@@ -117,7 +117,7 @@ int init_mdns(const char *host) {
 		return 0;
 	}
 
-	Serial.printf("mDNS started : %s\r\n", host);
+	Serial.printf("mDNS started : %s.local\r\n", host);
 
 	return 1;
 }
