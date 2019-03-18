@@ -165,7 +165,7 @@ int add_http_routes(WebServer *server, const char *path) {
 
 	// Handling uploading firmware file
 	server->on(path, HTTP_POST, [server]() {
-		server->send(200, "text/plain", (Update.hasError()) ? "Update: fail" : "Update: OK!");
+		server->send(200, "text/plain", (Update.hasError()) ? "Update: fail\n" : "Update: OK!\n");
 		delay(500);
 		ESP.restart();
 	}, [server]() {
