@@ -12,7 +12,7 @@ Include the WebOTA library
 
     #include <WebOTA.h>
 
-Optionally initialize the WebOTA library if you want to change the defaults . This is done at the end of your `setup()` function:
+Optionally initialize the WebOTA library if you want to change the defaults. This is done at the end of your `setup()` function:
 
     void setup() {
         // Other init code here (WiFi, etc)
@@ -37,6 +37,10 @@ Listen for update requests at the end of your `loop()` function:
 You will need to create a binary sketch image to upload. This is done in the Arduino IDE by going to the `Sketch` menu and selecting `Export compiled Binary`.
 
 Navigate to your ESP in a web browser to upload your binary image. Typical URLs are: http://esp-ota.local:8080/webota.
+
+You can also use Curl if you want to script your uploads from the CLI
+
+    curl -F "file=@MyImage.bin" http://esp-ota.local:8080/webota
 
 ## Based on
 
