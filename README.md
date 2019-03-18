@@ -17,9 +17,9 @@ Optionally initialize the WebOTA library if you want to change the defaults . Th
     void setup() {
         // Other init code here (WiFi, etc)
 
-        // The defaults are 8080 and "/webota"
-        // if you omit init_web_ota() it will use the defaults
-        init_web_ota(8888, "/update");
+        // To use a specific port and path uncomment this line
+        // Defaults are 8080 and "/webota"
+        // init_web_ota(8888, "/update");
     }
 
 Listen for update requests at the end of your `loop()` function:
