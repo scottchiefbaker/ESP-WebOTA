@@ -251,4 +251,5 @@ int handle_webota() {
 	}
 
 	OTAServer.handleClient();
+	MDNS.update();
 }
