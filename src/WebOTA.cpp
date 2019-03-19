@@ -1,7 +1,9 @@
 // Arduino build process info: https://github.com/arduino/Arduino/wiki/Build-Process
 
-const char *WEBOTA_VERSION = "0.1.4";
+const char *WEBOTA_VERSION = "0.1.5";
+bool INIT_RUN              = false;
 
+#include "WebOTA.h"
 #include <Arduino.h>
 #include <WiFiClient.h>
 
@@ -22,34 +24,129 @@ WebServer OTAServer(9999);
 ESP8266WebServer OTAServer(9999);
 #endif
 
-// Global WebServer object
-// Starts on a bogus port (we change it later)
+WebOTA webota;
 
-// Track whether the init has run (only run it once)
-bool INIT_RUN = false;
-char MDNS_GLOBAL[30];
+////////////////////////////////////////////////////////////////////////////
 
-// Index page
-const char* indexPage = "<h1>WebOTA</h1>";
+int WebOTA::init(const unsigned int port, const char *path) {
+	this->port = port;
+	this->path = path;
 
-long max_sketch_size() {
+	if (INIT_RUN == true) {
+		return 0;
+	}
+
+	add_http_routes(&OTAServer, path);
+	OTAServer.begin(port);
+
+	Serial.printf("WebOTA url   : http://%s.local:%d%s\r\n\r\n", this->mdns.c_str(), port, path);
+
+	// Store that init has already run
+	INIT_RUN = true;
+
+	return 1;
+}
+
+// One param
+int WebOTA::init(const unsigned int port) {
+	return WebOTA::init(port, "/webota");
+}
+
+// No params
+int WebOTA::init() {
+	return WebOTA::init(8080, "/webota");
+}
+
+int WebOTA::handle() {
+	static bool init_run = false;
+
+	if (INIT_RUN == false) {
+		WebOTA::init();
+	}
+
+	OTAServer.handleClient();
+	MDNS.update();
+}
+
+long WebOTA::max_sketch_size() {
 	long ret = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
 
 	return ret;
 }
 
+#ifdef ESP8266
+int WebOTA::add_http_routes(ESP8266WebServer *server, const char *path) {
+#endif
+#ifdef ESP32
+int WebOTA::add_http_routes(WebServer *server, const char *path) {
+#endif
+	// Index page
+	server->on("/", HTTP_GET, [server]() {
+		server->send(200, "text/html", "<h1>WebOTA</h1>");
+	});
+
+	// Upload firmware page
+	server->on(path, HTTP_GET, [server,this]() {
+		String ota_html = this->get_ota_html();
+		server->send(200, "text/html", ota_html.c_str());
+	});
+
+	// Handling uploading firmware file
+	server->on(path, HTTP_POST, [server,this]() {
+		server->send(200, "text/plain", (Update.hasError()) ? "Update: fail\n" : "Update: OK!\n");
+		delay(500);
+		ESP.restart();
+	}, [server,this]() {
+		HTTPUpload& upload = server->upload();
+
+		if (upload.status == UPLOAD_FILE_START) {
+			Serial.printf("Firmware update initiated: %s\r\n", upload.filename.c_str());
+
+			//uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+			uint32_t maxSketchSpace = this->max_sketch_size();
+
+			if (!Update.begin(maxSketchSpace)) { //start with max available size
+				Update.printError(Serial);
+			}
+		} else if (upload.status == UPLOAD_FILE_WRITE) {
+			/* flashing firmware to ESP*/
+			if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+				Update.printError(Serial);
+			}
+
+			// Store the next milestone to output
+			uint16_t chunk_size  = 51200;
+			static uint32_t next = 51200;
+
+			// Check if we need to output a milestone (100k 200k 300k)
+			if (upload.totalSize >= next) {
+				Serial.printf("%dk ", next / 1024);
+				next += chunk_size;
+			}
+		} else if (upload.status == UPLOAD_FILE_END) {
+			if (Update.end(true)) { //true to set the size to the current progress
+				Serial.printf("\r\nFirmware update successful: %u bytes\r\nRebooting...\r\n", upload.totalSize);
+			} else {
+				Update.printError(Serial);
+			}
+		}
+	});
+
+	server->begin();
+}
+
 // Get the HTML for the sketch upload page
-String get_ota_html() {
+String WebOTA::get_ota_html() {
 	String ota_html = "";
 
-	ota_html += "<h1>WebOTA Version: " + (String) WEBOTA_VERSION + "</h1>\n";
+	ota_html += "<h1>WebOTA Version: " + (String)WEBOTA_VERSION + "</h1>\n";
 	ota_html += "\n";
 	ota_html += "<form method=\"POST\" action=\"#\" enctype=\"multipart/form-data\" id=\"upload_form\">\n";
 	ota_html += "    <input type=\"file\" name=\"update\" id=\"file\">\n";
 	ota_html += "    <input type=\"submit\" value=\"Update\">\n";
 	ota_html += "</form>\n";
 	ota_html += "\n";
-	ota_html += "<div style=\"font-size: 75%;\">Max sketch size: " + (String)max_sketch_size() + "</div>\n";
+	ota_html += "<div style=\"font-size: 75%;\">Max sketch size: " + (String)this->max_sketch_size() + "</div>\n";
 	ota_html += "<div id=\"prg_wrap\" style=\"border: 0px solid; width: 100%;\">\n";
 	ota_html += "   <div id=\"prg\" style=\"text-shadow: 2px 2px 3px black; padding: 5px 0; display: none; border: 1px solid #008aff; background: #002180; text-align: center; color: white;\"></div>\n";
 	ota_html += "</div>\n";
@@ -103,11 +200,19 @@ String get_ota_html() {
 	return ota_html;
 }
 
-String ip2string(IPAddress ip) {
-	String ret = String(ip[0]) + "." +  String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
+// If the MCU is in a delay() it cannot respond to HTTP OTA requests
+// We do a "fake" looping delay and listen for incoming HTTP requests while waiting
+void WebOTA::delay(int ms) {
+	int last = millis();
 
-	return ret;
+	while ((millis() - last) < ms) {
+		OTAServer.handleClient();
+		delay(5);
+	}
 }
+
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
 
 int init_mdns(const char *host) {
 	// Use mdns for host name resolution
@@ -119,7 +224,15 @@ int init_mdns(const char *host) {
 
 	Serial.printf("mDNS started : %s.local\r\n", host);
 
+	webota.mdns = host;
+
 	return 1;
+}
+
+String ip2string(IPAddress ip) {
+	String ret = String(ip[0]) + "." +  String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
+
+	return ret;
 }
 
 int init_wifi(const char *ssid, const char *password, const char *mdns_hostname) {
@@ -143,113 +256,4 @@ int init_wifi(const char *ssid, const char *password, const char *mdns_hostname)
 	Serial.printf("MAC address  : %s \r\n", WiFi.macAddress().c_str());
 
 	init_mdns(mdns_hostname);
-	strcpy(MDNS_GLOBAL, mdns_hostname); // Store the mDNS name for later
-}
-
-#ifdef ESP8266
-int add_http_routes(ESP8266WebServer *server, const char *path) {
-#endif
-#ifdef ESP32
-int add_http_routes(WebServer *server, const char *path) {
-#endif
-	// Index page
-	server->on("/", HTTP_GET, [server]() {
-		server->send(200, "text/html", indexPage);
-	});
-
-	// Upload firmware page
-	server->on(path, HTTP_GET, [server]() {
-		String ota_html = get_ota_html();
-		server->send(200, "text/html", ota_html.c_str());
-	});
-
-	// Handling uploading firmware file
-	server->on(path, HTTP_POST, [server]() {
-		server->send(200, "text/plain", (Update.hasError()) ? "Update: fail\n" : "Update: OK!\n");
-		delay(500);
-		ESP.restart();
-	}, [server]() {
-		HTTPUpload& upload = server->upload();
-
-		if (upload.status == UPLOAD_FILE_START) {
-			Serial.printf("Firmware update initiated: %s\r\n", upload.filename.c_str());
-
-			//uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-			uint32_t maxSketchSpace = max_sketch_size();
-
-			if (!Update.begin(maxSketchSpace)) { //start with max available size
-				Update.printError(Serial);
-			}
-		} else if (upload.status == UPLOAD_FILE_WRITE) {
-			/* flashing firmware to ESP*/
-			if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-				Update.printError(Serial);
-			}
-
-			// Store the next milestone to output
-			uint16_t chunk_size  = 51200;
-			static uint32_t next = 51200;
-
-			// Check if we need to output a milestone (100k 200k 300k)
-			if (upload.totalSize >= next) {
-				Serial.printf("%dk ", next / 1024);
-				next += chunk_size;
-			}
-		} else if (upload.status == UPLOAD_FILE_END) {
-			if (Update.end(true)) { //true to set the size to the current progress
-				Serial.printf("\r\nFirmware update successful: %u bytes\r\nRebooting...\r\n", upload.totalSize);
-			} else {
-				Update.printError(Serial);
-			}
-		}
-	});
-
-	server->begin();
-}
-
-// Configure the HTTP routes and start the web server
-void init_webota(const int port, const char *path) {
-	if (INIT_RUN == true) {
-		return;
-	}
-
-	add_http_routes(&OTAServer, path);
-	OTAServer.begin(port);
-
-	Serial.printf("WebOTA url   : http://%s.local:%d%s\r\n\r\n", MDNS_GLOBAL, port, path);
-
-	// Store that init has already run
-	INIT_RUN = true;
-}
-
-// One param
-void init_webota(const int port) {
-	init_webota(port, "/webota");
-}
-
-// No params
-void init_webota() {
-	init_webota(8080, "/webota");
-}
-
-// If the MCU is in a delay() it cannot respond to HTTP OTA requests
-// We do a "fake" looping delay and listen for incoming HTTP requests while waiting
-void webota_delay(int ms) {
-	int last = millis();
-
-	while ((millis() - last) < ms) {
-		OTAServer.handleClient();
-		delay(5);
-	}
-}
-
-// This is the part that goes in loop() to listen for requests
-// If init hasn't run, it will run it
-int handle_webota() {
-	if (INIT_RUN == false) {
-		init_webota();
-	}
-
-	OTAServer.handleClient();
-	MDNS.update();
 }
