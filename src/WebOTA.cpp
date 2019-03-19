@@ -66,7 +66,9 @@ int WebOTA::handle() {
 	}
 
 	OTAServer.handleClient();
+#ifdef ESP8266
 	MDNS.update();
+#endif
 }
 
 long WebOTA::max_sketch_size() {
