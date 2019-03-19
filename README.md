@@ -19,7 +19,7 @@ Optionally initialize the WebOTA library if you want to change the defaults. Thi
 
         // To use a specific port and path uncomment this line
         // Defaults are 8080 and "/webota"
-        // init_web_ota(8888, "/update");
+        // webota.init(8888, "/update");
     }
 
 Listen for update requests at the end of your `loop()` function:
@@ -27,10 +27,10 @@ Listen for update requests at the end of your `loop()` function:
     void loop() {
         // Other loop code here
 
-        handle_webota();
+        webota.handle();
     }
 
-**Note:** If you have long `delay()` commands in your `loop()` WebOTA may not be responsive. We have provided `webota_delay()` as a drop-in replacement, which is more WebOTA friendly.
+**Note:** If you have long `delay()` commands in your `loop()` WebOTA may not be responsive. We have provided `webota.delay()` as a drop-in replacement, which is more WebOTA friendly.
 
 ## Upload a sketch
 
