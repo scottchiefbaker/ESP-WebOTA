@@ -2,8 +2,6 @@
 
 #define WEBOTA_VERSION "0.1.5"
 
-bool INIT_RUN = false;
-
 #include "WebOTA.h"
 #include <Arduino.h>
 #include <WiFiClient.h>
@@ -33,7 +31,8 @@ int WebOTA::init(const unsigned int port, const char *path) {
 	this->port = port;
 	this->path = path;
 
-	if (INIT_RUN == true) {
+	// Only run this once
+	if (this->init_has_run) {
 		return 0;
 	}
 
@@ -43,7 +42,7 @@ int WebOTA::init(const unsigned int port, const char *path) {
 	Serial.printf("WebOTA url   : http://%s.local:%d%s\r\n\r\n", this->mdns.c_str(), port, path);
 
 	// Store that init has already run
-	INIT_RUN = true;
+	this->init_has_run = true;
 
 	return 1;
 }
@@ -61,7 +60,8 @@ int WebOTA::init() {
 int WebOTA::handle() {
 	static bool init_run = false;
 
-	if (INIT_RUN == false) {
+	// If we haven't run the init yet run it
+	if (!this->init_has_run) {
 		WebOTA::init();
 	}
 
