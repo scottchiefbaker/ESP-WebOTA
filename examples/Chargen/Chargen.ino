@@ -10,7 +10,7 @@ void setup() {
 	init_wifi(ssid, password, host);
 
 	// Defaults to 8080 and "/webota"
-	//init_webota(80, "/update");
+	//webota.init(80, "/update");
 }
 
 int offset = 0;
@@ -33,5 +33,5 @@ void loop() {
 
 	if (offset >= len) { offset = 0; }
 
-    handle_webota();
+    webota.handle();
 }

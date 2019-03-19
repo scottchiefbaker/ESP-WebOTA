@@ -39,7 +39,7 @@ void setup() {
 	init_wifi(ssid, password, host);
 
 	// Defaults to 8080 and "/webota"
-	//init_webota(80, "/update");
+	//webota.init(80, "/update");
 }
 
 void loop() {
@@ -72,5 +72,5 @@ void loop() {
 
 	i++;
 
-	handle_webota();
+	webota.handle();
 }
