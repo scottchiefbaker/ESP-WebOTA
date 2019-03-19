@@ -207,7 +207,7 @@ void WebOTA::delay(int ms) {
 
 	while ((millis() - last) < ms) {
 		OTAServer.handleClient();
-		delay(5);
+		::delay(5);
 	}
 }
 
