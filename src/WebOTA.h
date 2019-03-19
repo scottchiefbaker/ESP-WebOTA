@@ -27,6 +27,8 @@ class WebOTA {
 
 		int handle();
 	private:
+		bool init_has_run;
+
 		String get_ota_html();
 		long max_sketch_size();
 };
