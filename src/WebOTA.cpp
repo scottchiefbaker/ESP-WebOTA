@@ -1,7 +1,8 @@
 // Arduino build process info: https://github.com/arduino/Arduino/wiki/Build-Process
 
-const char *WEBOTA_VERSION = "0.1.5";
-bool INIT_RUN              = false;
+#define WEBOTA_VERSION "0.1.5"
+
+bool INIT_RUN = false;
 
 #include "WebOTA.h"
 #include <Arduino.h>
@@ -74,6 +75,66 @@ long WebOTA::max_sketch_size() {
 	return ret;
 }
 
+// R Macro string literal https://en.cppreference.com/w/cpp/language/string_literal
+const char ota_html[] PROGMEM = "<h1>WebOTA Version: " WEBOTA_VERSION "</h1>"
+R"!^!(
+
+<form method="POST" action="#" enctype="multipart/form-data" id="upload_form">
+    <input type="file" name="update" id="file">
+    <input type="submit" value="Update">
+</form>
+
+<div id="prg_wrap" style="border: 0px solid; width: 100%;">
+   <div id="prg" style="text-shadow: 2px 2px 3px black; padding: 5px 0; display: none; border: 1px solid #008aff; background: #002180; text-align: center; color: white;"></div>
+</div>
+
+<script>
+var domReady = function(callback) {
+	document.readyState === "interactive" || document.readyState === "complete" ? callback() : document.addEventListener("DOMContentLoaded", callback);
+};
+
+domReady(function() {
+	var myform = document.getElementById('upload_form');
+	var filez  = document.getElementById('file');
+
+	myform.onsubmit = function(event) {
+		event.preventDefault();
+
+		var formData = new FormData();
+		var file     = filez.files[0];
+
+		if (!file) { return false; }
+
+		formData.append("files", file, file.name);
+
+		var xhr = new XMLHttpRequest();
+		xhr.upload.addEventListener("progress", function(evt) {
+			if (evt.lengthComputable) {
+				var per = Math.round((evt.loaded / evt.total) * 100);
+				var prg = document.getElementById('prg');
+
+				prg.innerHTML     = per + "%"
+				prg.style.width   = per + "%"
+				prg.style.display = "block"
+			}
+		}, false);
+		xhr.open('POST', location.href, true);
+
+		// Set up a handler for when the request finishes.
+		xhr.onload = function () {
+			if (xhr.status === 200) {
+				//alert('Success');
+			} else {
+				//alert('An error occurred!');
+			}
+		};
+
+		xhr.send(formData);
+   }
+});
+</script>)!^!";
+
+
 #ifdef ESP8266
 int WebOTA::add_http_routes(ESP8266WebServer *server, const char *path) {
 #endif
@@ -87,8 +148,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 
 	// Upload firmware page
 	server->on(path, HTTP_GET, [server,this]() {
-		String ota_html = this->get_ota_html();
-		server->send(200, "text/html", ota_html.c_str());
+		server->send_P(200, "text/html", ota_html);
 	});
 
 	// Handling uploading firmware file
@@ -133,71 +193,6 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 	});
 
 	server->begin();
-}
-
-// Get the HTML for the sketch upload page
-String WebOTA::get_ota_html() {
-	String ota_html = "";
-
-	ota_html += "<h1>WebOTA Version: " + (String)WEBOTA_VERSION + "</h1>\n";
-	ota_html += "\n";
-	ota_html += "<form method=\"POST\" action=\"#\" enctype=\"multipart/form-data\" id=\"upload_form\">\n";
-	ota_html += "    <input type=\"file\" name=\"update\" id=\"file\">\n";
-	ota_html += "    <input type=\"submit\" value=\"Update\">\n";
-	ota_html += "</form>\n";
-	ota_html += "\n";
-	ota_html += "<div style=\"font-size: 75%;\">Max sketch size: " + (String)this->max_sketch_size() + "</div>\n";
-	ota_html += "<div id=\"prg_wrap\" style=\"border: 0px solid; width: 100%;\">\n";
-	ota_html += "   <div id=\"prg\" style=\"text-shadow: 2px 2px 3px black; padding: 5px 0; display: none; border: 1px solid #008aff; background: #002180; text-align: center; color: white;\"></div>\n";
-	ota_html += "</div>\n";
-	ota_html += "\n";
-	ota_html += "<script>\n";
-	ota_html += "var domReady = function(callback) {\n";
-	ota_html += "	document.readyState === \"interactive\" || document.readyState === \"complete\" ? callback() : document.addEventListener(\"DOMContentLoaded\", callback);\n";
-	ota_html += "};\n";
-	ota_html += "\n";
-	ota_html += "domReady(function() {\n";
-	ota_html += "	var myform = document.getElementById('upload_form');\n";
-	ota_html += "	var filez  = document.getElementById('file');\n";
-	ota_html += "\n";
-	ota_html += "	myform.onsubmit = function(event) {\n";
-	ota_html += "		event.preventDefault();\n";
-	ota_html += "\n";
-	ota_html += "		var formData = new FormData();\n";
-	ota_html += "		var file     = filez.files[0];\n";
-	ota_html += "\n";
-	ota_html += "		if (!file) { return false; }\n";
-	ota_html += "\n";
-	ota_html += "		formData.append(\"files\", file, file.name);\n";
-	ota_html += "\n";
-	ota_html += "		var xhr = new XMLHttpRequest();\n";
-	ota_html += "		xhr.upload.addEventListener(\"progress\", function(evt) {\n";
-	ota_html += "			if (evt.lengthComputable) {\n";
-	ota_html += "				var per = Math.round((evt.loaded / evt.total) * 100);\n";
-	ota_html += "				var prg = document.getElementById('prg');\n";
-	ota_html += "\n";
-	ota_html += "				prg.innerHTML     = per + \"%\"\n";
-	ota_html += "				prg.style.width   = per + \"%\"\n";
-	ota_html += "				prg.style.display = \"block\"\n";
-	ota_html += "			}\n";
-	ota_html += "		}, false);\n";
-	ota_html += "		xhr.open('POST', location.href, true);\n";
-	ota_html += "\n";
-	ota_html += "		// Set up a handler for when the request finishes.\n";
-	ota_html += "		xhr.onload = function () {\n";
-	ota_html += "			if (xhr.status === 200) {\n";
-	ota_html += "				//alert('Success');\n";
-	ota_html += "			} else {\n";
-	ota_html += "				//alert('An error occurred!');\n";
-	ota_html += "			}\n";
-	ota_html += "		};\n";
-	ota_html += "\n";
-	ota_html += "		xhr.send(formData);\n";
-	ota_html += "   }\n";
-	ota_html += "});\n";
-	ota_html += "</script>\n";
-
-	return ota_html;
 }
 
 // If the MCU is in a delay() it cannot respond to HTTP OTA requests
