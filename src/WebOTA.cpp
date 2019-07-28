@@ -58,8 +58,6 @@ int WebOTA::init() {
 }
 
 int WebOTA::handle() {
-	static bool init_run = false;
-
 	// If we haven't run the init yet run it
 	if (!this->init_has_run) {
 		WebOTA::init();
