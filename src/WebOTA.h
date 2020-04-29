@@ -16,7 +16,7 @@ class WebOTA {
 		int init(const unsigned int port, const char *path);
 		int init(const unsigned int port);
 		int init();
-		void delay(int ms);
+		void delay(unsigned int ms);
 
 #ifdef ESP8266
 		int add_http_routes(ESP8266WebServer *server, const char *path);
