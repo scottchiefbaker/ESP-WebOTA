@@ -202,7 +202,8 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 // If the MCU is in a delay() it cannot respond to HTTP OTA requests
 // We do a "fake" looping delay and listen for incoming HTTP requests while waiting
 void WebOTA::delay(unsigned int ms) {
-	unsigned int last = millis();
+	// Borrowed from mshoe007 @ https://github.com/scottchiefbaker/ESP-WebOTA/issues/8
+	decltype(millis()) last;
 
 	while ((millis() - last) < ms) {
 		OTAServer.handleClient();
