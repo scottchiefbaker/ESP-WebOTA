@@ -203,7 +203,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 // We do a "fake" looping delay and listen for incoming HTTP requests while waiting
 void WebOTA::delay(unsigned int ms) {
 	// Borrowed from mshoe007 @ https://github.com/scottchiefbaker/ESP-WebOTA/issues/8
-	decltype(millis()) last;
+	decltype(millis()) last = millis();
 
 	while ((millis() - last) < ms) {
 		OTAServer.handleClient();
