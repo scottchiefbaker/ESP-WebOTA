@@ -78,8 +78,9 @@ long WebOTA::max_sketch_size() {
 }
 
 // R Macro string literal https://en.cppreference.com/w/cpp/language/string_literal
-const char ota_html[] PROGMEM = "<h1>WebOTA Version: " WEBOTA_VERSION "</h1>"
-R"!^!(
+const char ota_version_html[] PROGMEM = "<h1>WebOTA Version: " WEBOTA_VERSION "</h1>";
+
+const char ota_upload_form[] PROGMEM = R"!^!(
 
 <form method="POST" action="#" enctype="multipart/form-data" id="upload_form">
     <input type="file" name="update" id="file">
@@ -150,7 +151,15 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 
 	// Upload firmware page
 	server->on(path, HTTP_GET, [server,this]() {
-		server->send_P(200, "text/html", ota_html);
+		String html = "";
+		if (this->custom_html != NULL) {
+			html += this->custom_html;
+		} else {
+			html += ota_version_html;
+		}
+
+		html += ota_upload_form;
+		server->send_P(200, "text/html", html.c_str());
 	});
 
 	// Handling uploading firmware file
@@ -211,6 +220,9 @@ void WebOTA::delay(unsigned int ms) {
 	}
 }
 
+void WebOTA::set_custom_html(char const * const html) {
+	this->custom_html = html;
+}
 ///////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 

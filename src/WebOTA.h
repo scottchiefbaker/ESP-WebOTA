@@ -26,9 +26,12 @@ class WebOTA {
 #endif
 
 		int handle();
+
+		void set_custom_html(char const * const html);
+
 	private:
 		bool init_has_run;
-
+		char const * custom_html = NULL;
 		String get_ota_html();
 		long max_sketch_size();
 };
