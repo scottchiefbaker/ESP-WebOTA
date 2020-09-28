@@ -152,12 +152,9 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 	// Upload firmware page
 	server->on(path, HTTP_GET, [server,this]() {
 		String html = "";
-		if (this->custom_html != NULL)
-		{
+		if (this->custom_html != NULL) {
 			html += this->custom_html;
-		}
-		else
-		{
+		} else {
 			html += ota_version_html;
 		}
 
@@ -223,8 +220,7 @@ void WebOTA::delay(unsigned int ms) {
 	}
 }
 
-void WebOTA::set_custom_html(char const * const html)
-{
+void WebOTA::set_custom_html(char const * const html) {
 	this->custom_html = html;
 }
 ///////////////////////////////////////////////////////////////////////////
