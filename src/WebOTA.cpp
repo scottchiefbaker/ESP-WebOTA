@@ -155,10 +155,10 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 		if (this->custom_html != NULL) {
 			html += this->custom_html;
 		} else {
-			html += ota_version_html;
+			html += FPSTR(ota_version_html);
 		}
 
-		html += ota_upload_form;
+		html += FPSTR(ota_upload_form);
 		server->send_P(200, "text/html", html.c_str());
 	});
 
