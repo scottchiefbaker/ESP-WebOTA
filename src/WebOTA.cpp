@@ -78,22 +78,20 @@ long WebOTA::max_sketch_size() {
 }
 
 // R Macro string literal https://en.cppreference.com/w/cpp/language/string_literal
-const char ota_version_html[] PROGMEM = "<h1>WebOTA Version: " WEBOTA_VERSION "</h1>";
-
 const char ota_upload_form[] PROGMEM = R"!^!(
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>WebOTA upload form</title>
-	
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>WebOTA upload form</title>
+
 	<style>
 		body {
 			margin: 2em;
 			font-family: sans-serif;
 		}
-		
+
 		input[type=file]::file-selector-button, .btn {
 			margin-right: 20px;
 			border: 1px solid gray;
@@ -106,10 +104,10 @@ const char ota_upload_form[] PROGMEM = R"!^!(
 			transition: background .2s ease-in-out;
 			width: 10em;
 		}
-		
+
 		.btn {
 			width: 10em;
-			
+
 			margin-top: 12px;
 			background-image: linear-gradient(to bottom,#428bca 0,#2d6ca2 100%%);
 		}
@@ -117,34 +115,34 @@ const char ota_upload_form[] PROGMEM = R"!^!(
 		input[type=file]::file-selector-button:hover {
 			background-image: linear-gradient(to bottom,#8ef88e 0, #4e9029 100%%);
 		}
-		
+
 		.prog_bar {
 			margin: 12px 0;
-			text-shadow: 2px 2px 3px black; 
+			text-shadow: 2px 2px 3px black;
 			padding: 5px 0;
-			display: none; 
+			display: none;
 			border: 1px solid #7c7c7c;
 			background-image: linear-gradient(to right,#d2d2d2 0,#2d2d2d 100%%);
 			line-height: 1.3em;
 			border-radius: 4px;
-			text-align: center; 
+			text-align: center;
 			color: white;
 			font-size: 250%%;
 		}
 
 	</style>
-  </head>
-  <body>
+</head>
+<body>
 	<h1>WebOTA Version: %s</h1>
 
 	<form method="POST" action="#" enctype="multipart/form-data" id="upload_form">
 		<div><input class="" type="file" name="update" id="file"></div>
-		
+
 		<div><input class="btn" type="submit" value="Upload"></div>
 	</form>
 
 	<div id="prg_wrap" style="border: 0px solid; width: 100%%;">
-	   <div id="prg" class="prog_bar" style=""></div>
+		<div id="prg" class="prog_bar" style=""></div>
 	</div>
   </body>
 </html>
@@ -173,16 +171,16 @@ domReady(function() {
 			if (evt.lengthComputable) {
 				var per = Math.round((evt.loaded / evt.total) * 100);
 				var prg = document.getElementById('prg');
-				
+
 				var str = per + "%%";
 				prg.style.width   = str;
-								
+
 				if (per == 100) {
 					str += " - Rebooting...";
 				}
-				
+
 				prg.innerHTML = str;
-				
+
 				prg.style.display = "block";
 			}
 		}, false);
@@ -203,7 +201,6 @@ domReady(function() {
 </script>
 )!^!";
 
-
 #ifdef ESP8266
 int WebOTA::add_http_routes(ESP8266WebServer *server, const char *path) {
 #endif
@@ -219,14 +216,15 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 	server->on(path, HTTP_GET, [server,this]() {
 		String html = "";
 		if (this->custom_html != NULL) {
-			html += this->custom_html;
+			html = this->custom_html;
 		} else {
-			html += FPSTR(ota_version_html);
+			char buf[4096];
+			snprintf(buf, 4096, ota_upload_form, WEBOTA_VERSION); // Put the version string in the HTML
+
+			html.concat(buf);
 		}
 
-		char buf[4096];
-		snprintf(buf, 4096, ota_upload_form, WEBOTA_VERSION); // Put the version string in the HTML
-		server->send_P(200, "text/html", buf);
+		server->send_P(200, "text/html", html.c_str());
 	});
 
 	// Handling uploading firmware file
