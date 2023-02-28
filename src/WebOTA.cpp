@@ -1,6 +1,6 @@
 // Arduino build process info: https://github.com/arduino/Arduino/wiki/Build-Process
 
-#define WEBOTA_VERSION "0.1.5"
+#define WEBOTA_VERSION "0.1.6"
 
 #include "WebOTA.h"
 #include <Arduino.h>
