@@ -96,7 +96,7 @@ const char ota_upload_form[] PROGMEM = R"!^!(
 			margin-right: 20px;
 			border: 1px solid gray;
 			background: #37b837;
-			background-image: linear-gradient(to bottom,#59ef59 0, #55982f 100%%);
+			background-image: linear-gradient(to bottom,#59ef59 0, #55982f 100%);
 			padding: 10px 20px;
 			border-radius: 4px;
 			color: #fff;
@@ -109,11 +109,11 @@ const char ota_upload_form[] PROGMEM = R"!^!(
 			width: 10em;
 
 			margin-top: 12px;
-			background-image: linear-gradient(to bottom,#428bca 0,#2d6ca2 100%%);
+			background-image: linear-gradient(to bottom,#428bca 0,#2d6ca2 100%);
 		}
 
 		input[type=file]::file-selector-button:hover {
-			background-image: linear-gradient(to bottom,#8ef88e 0, #4e9029 100%%);
+			background-image: linear-gradient(to bottom,#8ef88e 0, #4e9029 100%);
 		}
 
 		.prog_bar {
@@ -122,18 +122,18 @@ const char ota_upload_form[] PROGMEM = R"!^!(
 			padding: 5px 0;
 			display: none;
 			border: 1px solid #7c7c7c;
-			background-image: linear-gradient(to right,#d2d2d2 0,#2d2d2d 100%%);
+			background-image: linear-gradient(to right,#d2d2d2 0,#2d2d2d 100%);
 			line-height: 1.3em;
 			border-radius: 4px;
 			text-align: center;
 			color: white;
-			font-size: 250%%;
+			font-size: 250%;
 		}
 
 	</style>
 </head>
 <body>
-	<h1>WebOTA Version: %s</h1>
+	<h1>WebOTA</h1>
 
 	<form method="POST" action="#" enctype="multipart/form-data" id="upload_form">
 		<div><input class="" type="file" name="update" id="file"></div>
@@ -141,7 +141,7 @@ const char ota_upload_form[] PROGMEM = R"!^!(
 		<div><input class="btn" type="submit" value="Upload"></div>
 	</form>
 
-	<div id="prg_wrap" style="border: 0px solid; width: 100%%;">
+	<div id="prg_wrap" style="border: 0px solid; width: 100%;">
 		<div id="prg" class="prog_bar" style=""></div>
 	</div>
   </body>
@@ -172,7 +172,7 @@ domReady(function() {
 				var per = Math.round((evt.loaded / evt.total) * 100);
 				var prg = document.getElementById('prg');
 
-				var str = per + "%%";
+				var str = per + "%";
 				prg.style.width   = str;
 
 				if (per == 100) {
@@ -218,10 +218,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 		if (this->custom_html != NULL) {
 			html = this->custom_html;
 		} else {
-			char buf[4096];
-			snprintf(buf, 4096, ota_upload_form, WEBOTA_VERSION); // Put the version string in the HTML
-
-			html.concat(buf);
+			html = FPSTR(ota_upload_form);
 		}
 
 		server->send_P(200, "text/html", html.c_str());
