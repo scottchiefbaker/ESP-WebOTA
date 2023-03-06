@@ -98,6 +98,11 @@ const char INDEX_HTML[] PROGMEM = R"!^!(
 		<div><input class="btn" type="submit" value="Upload"></div>
 	</form>
 
+	<p>
+		<b>Board:</b> %s<br />
+		<b>Flash:</b> %0.1f KB
+	</p>
+
 	<div>
 		<div id="prg" class="prog_bar" style=""></div>
 	</div>
@@ -171,10 +176,6 @@ domReady(function() {
 				var str = per + "%";
 				prg.style.width   = str;
 
-				if (per == 100) {
-					str += " - Rebooting...";
-				}
-
 				prg.innerHTML = str;
 
 				prg.style.display = "block";
@@ -213,8 +214,18 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 		if (this->custom_html != NULL) {
 			html = this->custom_html;
 		} else {
+			uint32_t maxSketchSpace = this->max_sketch_size();
+
+			#if defined(ESP8266)
+				const char* BOARD_NAME  = "ESP8266";
+			#elif defined(ESP32)
+				const char* BOARD_NAME  = "ESP32";
+			#else
+				const char* BOARD_NAME  = "Unknown";
+			#endif
+
 			char buf[1024];
-			snprintf_P(buf, sizeof(buf), INDEX_HTML, WEBOTA_VERSION);
+			snprintf_P(buf, sizeof(buf), INDEX_HTML, WEBOTA_VERSION, BOARD_NAME, maxSketchSpace / float(1024));
 
 			html = buf;
 		}
