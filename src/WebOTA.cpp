@@ -125,7 +125,7 @@ input[type=file]::file-selector-button, .btn {
 
 .btn {
 	margin-top: 12px;
-	background-image: linear-gradient(to bottom,#428bca 0,#2d6ca2 100%);
+	background-image: linear-gradient(to bottom,#78addb 0,#2d6ca2 100%);
 }
 
 .prog_bar {
