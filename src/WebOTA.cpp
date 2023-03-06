@@ -78,62 +78,19 @@ long WebOTA::max_sketch_size() {
 }
 
 // R Macro string literal https://en.cppreference.com/w/cpp/language/string_literal
-const char ota_upload_form[] PROGMEM = R"!^!(
+const char INDEX_HTML[] PROGMEM = R"!^!(
 <!doctype html>
 <html lang="en">
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>WebOTA upload form</title>
+	<title>WebOTA</title>
 
-	<style>
-		body {
-			margin: 2em;
-			font-family: sans-serif;
-		}
-
-		input[type=file]::file-selector-button, .btn {
-			margin-right: 20px;
-			border: 1px solid gray;
-			background: #37b837;
-			background-image: linear-gradient(to bottom,#59ef59 0, #55982f 100%);
-			padding: 10px 20px;
-			border-radius: 4px;
-			color: #fff;
-			cursor: pointer;
-			transition: background .2s ease-in-out;
-			width: 10em;
-		}
-
-		.btn {
-			width: 10em;
-
-			margin-top: 12px;
-			background-image: linear-gradient(to bottom,#428bca 0,#2d6ca2 100%);
-		}
-
-		input[type=file]::file-selector-button:hover {
-			background-image: linear-gradient(to bottom,#8ef88e 0, #4e9029 100%);
-		}
-
-		.prog_bar {
-			margin: 12px 0;
-			text-shadow: 2px 2px 3px black;
-			padding: 5px 0;
-			display: none;
-			border: 1px solid #7c7c7c;
-			background-image: linear-gradient(to right,#d2d2d2 0,#2d2d2d 100%);
-			line-height: 1.3em;
-			border-radius: 4px;
-			text-align: center;
-			color: white;
-			font-size: 250%;
-		}
-
-	</style>
+	<script src="main.js"></script>
+	<link rel="stylesheet" href="main.css">
 </head>
 <body>
-	<h1>WebOTA</h1>
+	<h1>WebOTA version %s</h1>
 
 	<form method="POST" action="#" enctype="multipart/form-data" id="upload_form">
 		<div><input class="" type="file" name="update" id="file"></div>
@@ -141,13 +98,52 @@ const char ota_upload_form[] PROGMEM = R"!^!(
 		<div><input class="btn" type="submit" value="Upload"></div>
 	</form>
 
-	<div id="prg_wrap" style="border: 0px solid; width: 100%;">
+	<div>
 		<div id="prg" class="prog_bar" style=""></div>
 	</div>
   </body>
 </html>
+)!^!";
 
-<script>
+const char MAIN_CSS[] PROGMEM = R"!^!(
+body {
+	margin: 2em;
+	font-family: sans-serif;
+}
+
+input[type=file]::file-selector-button, .btn {
+	margin-right: 20px;
+	border: 1px solid gray;
+	background-image: linear-gradient(to bottom,#59ef59 0, #55982f 100%);
+	padding: 10px 20px;
+	border-radius: 4px;
+	color: #fff;
+	cursor: pointer;
+	transition: background .2s ease-in-out;
+	width: 10em;
+}
+
+.btn {
+	margin-top: 12px;
+	background-image: linear-gradient(to bottom,#428bca 0,#2d6ca2 100%);
+}
+
+.prog_bar {
+	margin: 12px 0;
+	text-shadow: 2px 2px 3px black;
+	padding: 5px 0;
+	display: none;
+	border: 1px solid #7c7c7c;
+	background-image: linear-gradient(to right,#d2d2d2 0,#2d2d2d 100%);
+	line-height: 1.3em;
+	border-radius: 4px;
+	text-align: center;
+	color: white;
+	font-size: 250%;
+}
+)!^!";
+
+const char MAIN_JS[] PROGMEM = R"!^!(
 var domReady = function(callback) {
 	document.readyState === "interactive" || document.readyState === "complete" ? callback() : document.addEventListener("DOMContentLoaded", callback);
 };
@@ -198,7 +194,6 @@ domReady(function() {
 		xhr.send(formData);
    }
 });
-</script>
 )!^!";
 
 #ifdef ESP8266
@@ -209,7 +204,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 #endif
 	// Index page
 	server->on("/", HTTP_GET, [server]() {
-		server->send(200, "text/html", "<h1>WebOTA</h1>");
+		server->send(200, "text/html", F("<h1>WebOTA</h1>"));
 	});
 
 	// Upload firmware page
@@ -218,7 +213,10 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 		if (this->custom_html != NULL) {
 			html = this->custom_html;
 		} else {
-			html = FPSTR(ota_upload_form);
+			char buf[1024];
+			snprintf_P(buf, sizeof(buf), INDEX_HTML, WEBOTA_VERSION);
+
+			html = buf;
 		}
 
 		server->send_P(200, "text/html", html.c_str());
@@ -263,6 +261,21 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 				Update.printError(Serial);
 			}
 		}
+	});
+
+	// FILE: main.js
+	server->on("/main.js", HTTP_GET, [server]() {
+		server->send_P(200, "application/javascript", MAIN_JS);
+	});
+
+	// FILE: main.css
+	server->on("/main.css", HTTP_GET, [server]() {
+		server->send_P(200, "text/css", MAIN_CSS);
+	});
+
+	// FILE: favicon.ico
+	server->on("/favicon.ico", HTTP_GET, [server]() {
+		server->send(200, "image/vnd.microsoft.icon", "");
 	});
 
 	server->begin();
