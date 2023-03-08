@@ -85,8 +85,8 @@ const char INDEX_HTML[] PROGMEM = R"!^!(
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>WebOTA</title>
 
-	<script src="main.js"></script>
-	<link rel="stylesheet" href="main.css">
+	<script src="/main.js"></script>
+	<link rel="stylesheet" href="/main.css">
 </head>
 <body>
 	<h1>WebOTA version %s</h1>
