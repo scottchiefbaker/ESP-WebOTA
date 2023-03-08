@@ -1,11 +1,5 @@
 #include <Arduino.h>
-
-#ifdef ESP8266
-#include <ESP8266WebServer.h>
-#endif
-#ifdef ESP32
-#include <WebServer.h>
-#endif
+#include <ESPAsyncWebSrv.h>
 
 class WebOTA {
 	public:
@@ -18,22 +12,17 @@ class WebOTA {
 		int init();
 		void delay(unsigned int ms);
 
-#ifdef ESP8266
-		int add_http_routes(ESP8266WebServer *server, const char *path);
-#endif
-#ifdef ESP32
-		int add_http_routes(WebServer *server, const char *path);
-#endif
+		int add_http_routes(AsyncWebServer *server, const char *path);
 
 		int handle();
 
 		void set_custom_html(char const * const html);
+		long max_sketch_size();
 
 	private:
 		bool init_has_run;
 		char const * custom_html = NULL;
-		String get_ota_html();
-		long max_sketch_size();
+		String get_board_type();
 };
 
 int init_wifi(const char *ssid, const char *password, const char *mdns_hostname);
