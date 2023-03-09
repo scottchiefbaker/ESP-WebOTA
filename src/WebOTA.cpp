@@ -37,6 +37,12 @@ int WebOTA::init(const unsigned int port, const char *path) {
 	}
 
 	add_http_routes(&OTAServer, path);
+
+#ifdef ESP32
+	// https://github.com/espressif/arduino-esp32/issues/7708
+	// Fix some slowness
+	OTAServer.enableDelay(false);
+#endif
 	OTAServer.begin(port);
 
 	Serial.printf("WebOTA url   : http://%s.local:%d%s\r\n\r\n", this->mdns.c_str(), port, path);
