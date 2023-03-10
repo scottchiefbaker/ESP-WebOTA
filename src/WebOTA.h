@@ -23,6 +23,8 @@ class WebOTA {
 		bool init_has_run;
 		char const * custom_html = NULL;
 		String get_board_type();
+		String get_ota_html();
+		String human_time(uint32_t sec);
 };
 
 int init_wifi(const char *ssid, const char *password, const char *mdns_hostname);

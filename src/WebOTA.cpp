@@ -36,7 +36,6 @@ int WebOTA::init(const unsigned int port, const char *path) {
 	}
 
 	add_http_routes(&OTAServer, path);
-
 	OTAServer.begin();
 
 	Serial.printf("WebOTA url   : http://%s.local:%d%s\r\n\r\n", this->mdns.c_str(), port, path);
@@ -99,6 +98,8 @@ const char INDEX_HTML[] PROGMEM = R"!^!(
 
 	<p>
 		<b>Board:</b> %s<br />
+		<b>MAC:</b> %s<br />
+		<b>Uptime:</b> %s<br />
 	</p>
 
 	<div>
@@ -302,8 +303,11 @@ int WebOTA::add_http_routes(AsyncWebServer *server, const char *path) {
 			String BOARD_TYPE = this->get_board_type();
 			//size_t x = this->max_sketch_size();
 
-			char buf[1024] = "";
-			snprintf_P(buf, sizeof(buf), INDEX_HTML, WEBOTA_VERSION, BOARD_TYPE.c_str());
+			String uptime_str    = human_time(millis() / 1000);
+			const char* mac_addr = WiFi.macAddress().c_str();
+
+			char buf[1024];
+			snprintf_P(buf, sizeof(buf), INDEX_HTML, WEBOTA_VERSION, BOARD_TYPE.c_str(), mac_addr, uptime_str.c_str());
 
 			html = buf;
 		}
@@ -394,6 +398,28 @@ int init_mdns(const char *host) {
 
 String ip2string(IPAddress ip) {
 	String ret = String(ip[0]) + "." +  String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
+
+	return ret;
+}
+
+String WebOTA::human_time(uint32_t sec) {
+    int days = (sec / 86400);
+    sec = sec % 86400;
+    int hours = (sec / 3600);
+    sec = sec % 3600;
+    int mins  = (sec / 60);
+    sec = sec % 60;
+
+	char buf[24] = "";
+	if (days) {
+        snprintf(buf, sizeof(buf), "%d days %d hours\n", days, hours);
+    } else if (hours) {
+        snprintf(buf, sizeof(buf), "%d hours %d minutes\n", hours, mins);
+    } else {
+        snprintf(buf, sizeof(buf), "%d minutes %d seconds\n", mins, sec);
+    }
+
+	String ret = buf;
 
 	return ret;
 }
