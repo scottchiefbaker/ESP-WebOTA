@@ -106,7 +106,8 @@ const char INDEX_HTML[] PROGMEM = R"!^!(
 
 	<p>
 		<b>Board:</b> %s<br />
-		<b>Flash:</b> %0.1f KB
+		<b>MAC:</b> %s<br />
+		<b>Uptime:</b> %s<br />
 	</p>
 
 	<div>
@@ -220,7 +221,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 		if (this->custom_html != NULL) {
 			html = this->custom_html;
 		} else {
-			uint32_t maxSketchSpace = this->max_sketch_size();
+			//uint32_t maxSketchSpace = this->max_sketch_size();
 
 			#if defined(ESP8266)
 				const char* BOARD_NAME  = "ESP8266";
@@ -230,8 +231,11 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 				const char* BOARD_NAME  = "Unknown";
 			#endif
 
+			String uptime_str    = human_time(millis() / 1000);
+			const char* mac_addr = WiFi.macAddress().c_str();
+
 			char buf[1024];
-			snprintf_P(buf, sizeof(buf), INDEX_HTML, WEBOTA_VERSION, BOARD_NAME, maxSketchSpace / float(1024));
+			snprintf_P(buf, sizeof(buf), INDEX_HTML, WEBOTA_VERSION, BOARD_NAME, mac_addr, uptime_str.c_str());
 
 			html = buf;
 		}
@@ -335,6 +339,28 @@ int init_mdns(const char *host) {
 
 String ip2string(IPAddress ip) {
 	String ret = String(ip[0]) + "." +  String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
+
+	return ret;
+}
+
+String WebOTA::human_time(uint32_t sec) {
+    int days = (sec / 86400);
+    sec = sec % 86400;
+    int hours = (sec / 3600);
+    sec = sec % 3600;
+    int mins  = (sec / 60);
+    sec = sec % 60;
+
+	char buf[20] = "";
+	if (days) {
+        snprintf(buf, sizeof(buf), "%d days %d hours\n", days, hours);
+    } else if (hours) {
+        snprintf(buf, sizeof(buf), "%d hours %d minutes\n", hours, mins);
+    } else {
+        snprintf(buf, sizeof(buf), "%d minutes %d seconds\n", mins, sec);
+    }
+
+	String ret = buf;
 
 	return ret;
 }

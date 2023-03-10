@@ -33,6 +33,7 @@ class WebOTA {
 		bool init_has_run;
 		char const * custom_html = NULL;
 		String get_ota_html();
+		String human_time(uint32_t sec);
 		long max_sketch_size();
 };
 
