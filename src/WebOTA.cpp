@@ -88,7 +88,7 @@ const char INDEX_HTML[] PROGMEM = R"!^!(
 	<link rel="stylesheet" href="/main.css">
 </head>
 <body>
-	<h1>WebOTA version %s</h1>
+	<h1>WebOTA ASync version %s</h1>
 
 	<form method="POST" action="#" enctype="multipart/form-data" id="upload_form">
 		<div><input class="" type="file" name="update" id="file"></div>
