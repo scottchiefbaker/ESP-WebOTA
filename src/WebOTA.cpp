@@ -204,6 +204,21 @@ domReady(function() {
 });
 )!^!";
 
+String WebOTA::get_board_type() {
+
+#if defined(ESP8266)
+	String BOARD_NAME = "ESP8266";
+#elif defined(ESP32S2)
+	String BOARD_NAME = "ESP32-S2";
+#elif defined(ESP32)
+	String BOARD_NAME = "ESP32";
+#else
+	String BOARD_NAME = "Unknown";
+#endif
+
+	return BOARD_NAME;
+}
+
 #ifdef ESP8266
 int WebOTA::add_http_routes(ESP8266WebServer *server, const char *path) {
 #endif
@@ -232,10 +247,11 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 			#endif
 
 			String uptime_str    = human_time(millis() / 1000);
+			String board_type    = webota.get_board_type();
 			const char* mac_addr = WiFi.macAddress().c_str();
 
 			char buf[1024];
-			snprintf_P(buf, sizeof(buf), INDEX_HTML, WEBOTA_VERSION, BOARD_NAME, mac_addr, uptime_str.c_str());
+			snprintf_P(buf, sizeof(buf), INDEX_HTML, WEBOTA_VERSION, board_type, mac_addr, uptime_str.c_str());
 
 			html = buf;
 		}

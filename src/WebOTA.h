@@ -34,6 +34,7 @@ class WebOTA {
 		char const * custom_html = NULL;
 		String get_ota_html();
 		String human_time(uint32_t sec);
+		String get_board_type();
 		long max_sketch_size();
 };
 
