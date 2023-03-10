@@ -351,7 +351,7 @@ String WebOTA::human_time(uint32_t sec) {
     int mins  = (sec / 60);
     sec = sec % 60;
 
-	char buf[20] = "";
+	char buf[24] = "";
 	if (days) {
         snprintf(buf, sizeof(buf), "%d days %d hours\n", days, hours);
     } else if (hours) {
