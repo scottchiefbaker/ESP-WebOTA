@@ -215,8 +215,22 @@ String WebOTA::get_board_type() {
 #else
 	String BOARD_NAME = "Unknown";
 #endif
-
 	return BOARD_NAME;
+}
+
+String get_mac_address() {
+	uint8_t mac[6];
+
+	// Put the addr in mac
+	WiFi.macAddress(mac);
+
+	// Build a string and return it
+	char buf[20] = "";
+	snprintf(buf, sizeof(buf), "%X:%X:%X:%X:%X:%X", mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+
+	String ret = buf;
+
+	return ret;
 }
 
 #ifdef ESP8266
@@ -246,12 +260,12 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 				const char* BOARD_NAME  = "Unknown";
 			#endif
 
-			String uptime_str    = human_time(millis() / 1000);
-			String board_type    = webota.get_board_type();
-			const char* mac_addr = WiFi.macAddress().c_str();
+			String uptime_str = human_time(millis() / 1000);
+			String board_type = webota.get_board_type();
+			String mac_addr   = get_mac_address();
 
 			char buf[1024];
-			snprintf_P(buf, sizeof(buf), INDEX_HTML, WEBOTA_VERSION, board_type, mac_addr, uptime_str.c_str());
+			snprintf_P(buf, sizeof(buf), INDEX_HTML, WEBOTA_VERSION, board_type, mac_addr.c_str(), uptime_str.c_str());
 
 			html = buf;
 		}
