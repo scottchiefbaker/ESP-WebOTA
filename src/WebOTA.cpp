@@ -206,15 +206,24 @@ domReady(function() {
 
 String WebOTA::get_board_type() {
 
+// More information: https://github.com/search?q=repo%3Aarendst%2FTasmota%20esp32s2&type=code
+
 #if defined(ESP8266)
 	String BOARD_NAME = "ESP8266";
-#elif defined(ESP32S2)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
 	String BOARD_NAME = "ESP32-S2";
-#elif defined(ESP32)
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+	String BOARD_NAME = "ESP32-S3";
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+	String BOARD_NAME = "ESP32-C3";
+#elif defined(CONFIG_IDF_TARGET_ESP32)
 	String BOARD_NAME = "ESP32";
+#elif defined(CONFIG_ARDUINO_VARIANT)
+	String BOARD_NAME = CONFIG_ARDUINO_VARIANT;
 #else
 	String BOARD_NAME = "Unknown";
 #endif
+
 	return BOARD_NAME;
 }
 
