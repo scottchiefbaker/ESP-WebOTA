@@ -318,7 +318,9 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 			// Store the next milestone to output
 			uint16_t chunk_size  = 51200;
 			static uint32_t next = 51200;
-
+			if(_progress_callback) {
+				_progress_callback(upload.totalSize, upload.currentSize);
+			}
 			// Check if we need to output a milestone (100k 200k 300k)
 			if (upload.totalSize >= next) {
 				Serial.printf("%dk ", next / 1024);
