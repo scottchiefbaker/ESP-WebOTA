@@ -404,6 +404,26 @@ String WebOTA::human_time(uint32_t sec) {
 	return ret;
 }
 
+WebOTA& WebOTA::onStart(THandlerFunction fn) {
+    _start_callback = fn;
+    return *this;
+}
+
+WebOTA& WebOTA::onEnd(THandlerFunction fn) {
+    _end_callback = fn;
+    return *this;
+}
+
+WebOTA& WebOTA::onProgress(THandlerFunction_Progress fn) {
+    _progress_callback = fn;
+    return *this;
+}
+
+WebOTA& WebOTA::onError(THandlerFunction_Error fn) {
+    _error_callback = fn;
+    return *this;
+}
+
 int init_wifi(const char *ssid, const char *password, const char *mdns_hostname) {
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(ssid, password);
