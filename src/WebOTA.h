@@ -30,9 +30,10 @@ class WebOTA {
 		void set_custom_html(char const * const html);
 
 		typedef std::function<void(void)> THandlerFunction;
+    	typedef std::function<void(void)> THandlerFunction_Error;
     	typedef std::function<void(ota_error_t)> THandlerFunction_Error;
     	typedef std::function<void(unsigned int, unsigned int)> THandlerFunction_Progress;
-		
+
 		//This callback will be called when OTA connection has begun
     	WebOTA& onStart(THandlerFunction fn);
 
