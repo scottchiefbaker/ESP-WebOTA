@@ -7,6 +7,14 @@
 #include <WebServer.h>
 #endif
 
+typedef enum {
+  OTA_AUTH_ERROR,
+  OTA_BEGIN_ERROR,
+  OTA_CONNECT_ERROR,
+  OTA_RECEIVE_ERROR,
+  OTA_END_ERROR
+} ota_error_t;
+
 class WebOTA {
 	public:
 		unsigned int port;
@@ -30,7 +38,6 @@ class WebOTA {
 		void set_custom_html(char const * const html);
 
 		typedef std::function<void(void)> THandlerFunction;
-    	typedef std::function<void(void)> THandlerFunction_Error;
     	typedef std::function<void(ota_error_t)> THandlerFunction_Error;
     	typedef std::function<void(unsigned int, unsigned int)> THandlerFunction_Progress;
 

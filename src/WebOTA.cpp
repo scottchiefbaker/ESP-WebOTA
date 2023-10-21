@@ -302,7 +302,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 
 			if (!Update.begin(maxSketchSpace)) { //start with max available size
 				if (_error_callback) {
-					_error_callback();
+					_error_callback(OTA_BEGIN_ERROR);
 				}
 				Update.printError(Serial);
 			}
@@ -310,7 +310,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 			/* flashing firmware to ESP*/
 			if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
 				if (_error_callback) {
-					_error_callback();
+					_error_callback(OTA_END_ERROR);
 				}
 				Update.printError(Serial);
 			}
@@ -334,7 +334,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 				Serial.printf("\r\nFirmware update successful: %u bytes\r\nRebooting...\r\n", upload.totalSize);
 			} else {
 				if (_error_callback) {
-					_error_callback();
+					_error_callback(OTA_END_ERROR);
 				}
 				Update.printError(Serial);
 			}
