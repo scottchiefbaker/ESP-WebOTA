@@ -25,6 +25,12 @@ ESP8266WebServer OTAServer(9999);
 
 WebOTA webota;
 
+char WWW_USER[16]       = "";
+char WWW_PASSWORD[16]   = "";
+const char* WWW_REALM   = "WebOTA";
+// the Content of the HTML response in case of Unautherized Access Default:empty
+String authFailResponse = "Auth Fail";
+
 ////////////////////////////////////////////////////////////////////////////
 
 int WebOTA::init(const unsigned int port, const char *path) {
@@ -61,6 +67,13 @@ int WebOTA::init(const unsigned int port) {
 // No params
 int WebOTA::init() {
 	return WebOTA::init(8080, "/webota");
+}
+
+void WebOTA::useAuth(const char* user, const char* password) {
+	strncpy(WWW_USER, user, sizeof(WWW_USER) - 1);
+	strncpy(WWW_PASSWORD, password, sizeof(WWW_PASSWORD) - 1);
+
+	//Serial.printf("Set auth '%s' / '%s' %d\n", user, password, len);
 }
 
 int WebOTA::handle() {
@@ -242,6 +255,26 @@ String get_mac_address() {
 	return ret;
 }
 
+int8_t check_auth(WebServer *server) {
+	// If we have a user and a password we check digest auth
+	bool use_auth = (strlen(WWW_USER) && strlen(WWW_PASSWORD));
+	if (!use_auth) {
+		return 1;
+	}
+
+	if (!server->authenticate(WWW_USER, WWW_PASSWORD)) {
+		//Basic Auth Method
+		//return server.requestAuthentication(BASIC_AUTH, WWW_REALM, authFailResponse);
+
+		// Digest Auth
+		server->requestAuthentication(DIGEST_AUTH, WWW_REALM, authFailResponse);
+
+		return 0;
+	}
+
+	return 2;
+}
+
 #ifdef ESP8266
 int WebOTA::add_http_routes(ESP8266WebServer *server, const char *path) {
 #endif
@@ -250,11 +283,15 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 #endif
 	// Index page
 	server->on("/", HTTP_GET, [server]() {
+		check_auth(server);
+
 		server->send(200, "text/html", F("<h1>WebOTA</h1>"));
 	});
 
 	// Upload firmware page
 	server->on(path, HTTP_GET, [server,this]() {
+		check_auth(server);
+
 		String html = "";
 		if (this->custom_html != NULL) {
 			html = this->custom_html;
@@ -284,6 +321,8 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 
 	// Handling uploading firmware file
 	server->on(path, HTTP_POST, [server,this]() {
+		check_auth(server);
+
 		server->send(200, "text/plain", (Update.hasError()) ? "Update: fail\n" : "Update: OK!\n");
 		delay(500);
 		ESP.restart();

@@ -28,6 +28,7 @@ class WebOTA {
 		int handle();
 
 		void set_custom_html(char const * const html);
+		void useAuth(const char* user, const char* password);
 
 	private:
 		bool init_has_run;
