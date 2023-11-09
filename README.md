@@ -20,6 +20,11 @@ Optionally initialize the WebOTA library if you want to change the defaults. Thi
         // To use a specific port and path uncomment this line
         // Defaults are 8080 and "/webota"
         // webota.init(8888, "/update");
+
+        // If you call useAuth() in your setup function WebOTA will use
+        // HTTP digest authentication to request credentials from the user
+        // before allowing uploads
+        // webota.useAuth("username", "password");
     }
 
 Listen for update requests at the end of your `loop()` function:
