@@ -298,14 +298,6 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 		} else {
 			//uint32_t maxSketchSpace = this->max_sketch_size();
 
-			#if defined(ESP8266)
-				const char* BOARD_NAME  = "ESP8266";
-			#elif defined(ESP32)
-				const char* BOARD_NAME  = "ESP32";
-			#else
-				const char* BOARD_NAME  = "Unknown";
-			#endif
-
 			String uptime_str = human_time(millis() / 1000);
 			String board_type = webota.get_board_type();
 			String mac_addr   = get_mac_address();
