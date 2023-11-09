@@ -285,7 +285,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 	server->on("/", HTTP_GET, [server]() {
 		check_auth(server);
 
-		server->send(200, "text/html", F("<h1>WebOTA</h1>"));
+		server->send(200, "text/html", F("<h1 style=\"font-family: sans-serif;\">Arduino WebOTA</h1>"));
 	});
 
 	// Upload firmware page
