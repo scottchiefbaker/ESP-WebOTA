@@ -255,7 +255,12 @@ String get_mac_address() {
 	return ret;
 }
 
+#ifdef ESP32
 int8_t check_auth(WebServer *server) {
+#endif
+#ifdef ESP8266
+int8_t check_auth(ESP8266WebServer *server) {
+#endif
 	// If we have a user and a password we check digest auth
 	bool use_auth = (strlen(WWW_USER) && strlen(WWW_PASSWORD));
 	if (!use_auth) {
