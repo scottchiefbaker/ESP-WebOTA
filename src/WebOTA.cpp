@@ -326,25 +326,37 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 	}, [server,this]() {
 		HTTPUpload& upload = server->upload();
 
+
 		if (upload.status == UPLOAD_FILE_START) {
+			if (_start_callback) {
+				_start_callback();
+			}
 			Serial.printf("Firmware update initiated: %s\r\n", upload.filename.c_str());
 
 			//uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
 			uint32_t maxSketchSpace = this->max_sketch_size();
 
 			if (!Update.begin(maxSketchSpace)) { //start with max available size
+				if (_error_callback) {
+					_error_callback(OTA_BEGIN_ERROR);
+				}
 				Update.printError(Serial);
 			}
 		} else if (upload.status == UPLOAD_FILE_WRITE) {
 			/* flashing firmware to ESP*/
 			if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+				if (_error_callback) {
+					_error_callback(OTA_END_ERROR);
+				}
 				Update.printError(Serial);
 			}
 
 			// Store the next milestone to output
 			uint16_t chunk_size  = 51200;
 			static uint32_t next = 51200;
-
+			if(_progress_callback) {
+				_progress_callback(upload.totalSize, upload.currentSize);
+			}
 			// Check if we need to output a milestone (100k 200k 300k)
 			if (upload.totalSize >= next) {
 				Serial.printf("%dk ", next / 1024);
@@ -352,8 +364,14 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 			}
 		} else if (upload.status == UPLOAD_FILE_END) {
 			if (Update.end(true)) { //true to set the size to the current progress
+				if (_end_callback) {
+					_end_callback();
+				}
 				Serial.printf("\r\nFirmware update successful: %u bytes\r\nRebooting...\r\n", upload.totalSize);
 			} else {
+				if (_error_callback) {
+					_error_callback(OTA_END_ERROR);
+				}
 				Update.printError(Serial);
 			}
 		}
@@ -438,6 +456,26 @@ String WebOTA::human_time(uint32_t sec) {
 	String ret = buf;
 
 	return ret;
+}
+
+WebOTA& WebOTA::onStart(THandlerFunction fn) {
+    _start_callback = fn;
+    return *this;
+}
+
+WebOTA& WebOTA::onEnd(THandlerFunction fn) {
+    _end_callback = fn;
+    return *this;
+}
+
+WebOTA& WebOTA::onProgress(THandlerFunction_Progress fn) {
+    _progress_callback = fn;
+    return *this;
+}
+
+WebOTA& WebOTA::onError(THandlerFunction_Error fn) {
+    _error_callback = fn;
+    return *this;
 }
 
 int init_wifi(const char *ssid, const char *password, const char *mdns_hostname) {
