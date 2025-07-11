@@ -31,7 +31,7 @@ class WebOTA {
 		void useAuth(const char* user, const char* password);
 
 	private:
-		bool init_has_run;
+		bool init_has_run = false;
 		char const * custom_html = NULL;
 		String get_ota_html();
 		String human_time(uint32_t sec);
