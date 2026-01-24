@@ -10,30 +10,36 @@ Clone this repo to your Arduino libraries directory. On Linux this is `~/Arduino
 
 Include the WebOTA library
 
-    #include <WebOTA.h>
+```c
+#include <WebOTA.h>
+```
 
 Optionally initialize the WebOTA library if you want to change the defaults. This is done at the end of your `setup()` function:
 
-    void setup() {
-        // Other init code here (WiFi, etc)
+```c
+void setup() {
+    // Other init code here (WiFi, etc)
 
-        // To use a specific port and path uncomment this line
-        // Defaults are 8080 and "/webota"
-        // webota.init(8888, "/update");
+    // To use a specific port and path uncomment this line
+    // Defaults are 8080 and "/webota"
+    // webota.init(8888, "/update");
 
-        // If you call useAuth() in your setup function WebOTA will use
-        // HTTP digest authentication to request credentials from the user
-        // before allowing uploads
-        // webota.useAuth("username", "password");
-    }
+    // If you call useAuth() in your setup function WebOTA will use
+    // HTTP digest authentication to request credentials from the user
+    // before allowing uploads
+    // webota.useAuth("username", "password");
+}
+```
 
 Listen for update requests at the end of your `loop()` function:
 
-    void loop() {
-        // Other loop code here
+```c
+void loop() {
+    // Other loop code here
 
-        webota.handle();
-    }
+    webota.handle();
+}
+```
 
 **Note:** If you have long `delay()` commands in your `loop()` WebOTA may not be responsive. We have provided `webota.delay()` as a drop-in replacement, which is more WebOTA friendly.
 
