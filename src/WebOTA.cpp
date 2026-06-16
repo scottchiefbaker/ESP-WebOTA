@@ -286,12 +286,21 @@ int WebOTA::add_http_routes(ESP8266WebServer *server, const char *path) {
 #ifdef ESP32
 int WebOTA::add_http_routes(WebServer *server, const char *path) {
 #endif
-	// Index page
-	server->on("/", HTTP_GET, [server]() {
-		check_auth(server);
+	// Normalize empty path to "/" so webota.init(80, "") works like webota.init(80, "/")
+	if (strlen(path) == 0) {
+		path = "/";
+	}
 
-		server->send(200, "text/html", F("<h1 style=\"font-family: sans-serif;\">Arduino WebOTA</h1>"));
-	});
+	// Only register the default index page if the user's path isn't "/"
+	// to prevent it from shadowing the upload form (first-match-wins)
+	if (strcmp(path, "/") != 0) {
+		// Index page
+		server->on("/", HTTP_GET, [server]() {
+			check_auth(server);
+
+			server->send(200, "text/html", F("<h1 style=\"font-family: sans-serif;\">Arduino WebOTA</h1>"));
+		});
+	}
 
 	// Upload firmware page
 	server->on(path, HTTP_GET, [server,this]() {
