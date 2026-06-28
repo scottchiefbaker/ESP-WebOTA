@@ -330,8 +330,10 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 		if (!check_auth(server)) { return; }
 
 		server->send(200, "text/plain", (Update.hasError()) ? "Update: fail\n" : "Update: OK!\n");
-		delay(500);
-		ESP.restart();
+		if (!Update.hasError()) {
+			delay(500);
+			ESP.restart();
+		}
 	}, [server,this]() {
 		HTTPUpload& upload = server->upload();
 
