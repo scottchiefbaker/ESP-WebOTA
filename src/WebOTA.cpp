@@ -335,8 +335,13 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 	}, [server,this]() {
 		HTTPUpload& upload = server->upload();
 
+		static uint32_t next = 51200;
+		uint16_t chunk_size = 51200;
+
 		if (upload.status == UPLOAD_FILE_START) {
 			Serial.printf("Firmware update initiated: %s\r\n", upload.filename.c_str());
+
+			next = 51200;
 
 			//uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
 			uint32_t maxSketchSpace = this->max_sketch_size();
@@ -349,10 +354,6 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 			if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
 				Update.printError(Serial);
 			}
-
-			// Store the next milestone to output
-			uint16_t chunk_size  = 51200;
-			static uint32_t next = 51200;
 
 			// Check if we need to output a milestone (100k 200k 300k)
 			if (upload.totalSize >= next) {
