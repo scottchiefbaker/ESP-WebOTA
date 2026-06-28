@@ -296,7 +296,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 	if (strcmp(path, "/") != 0) {
 		// Index page
 		server->on("/", HTTP_GET, [server]() {
-			check_auth(server);
+			if (!check_auth(server)) { return; }
 
 			server->send(200, "text/html", F("<h1 style=\"font-family: sans-serif;\">Arduino WebOTA</h1>"));
 		});
@@ -304,7 +304,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 
 	// Upload firmware page
 	server->on(path, HTTP_GET, [server,this]() {
-		check_auth(server);
+		if (!check_auth(server)) { return; }
 
 		String html = "";
 		if (this->custom_html != NULL) {
@@ -327,7 +327,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 
 	// Handling uploading firmware file
 	server->on(path, HTTP_POST, [server,this]() {
-		check_auth(server);
+		if (!check_auth(server)) { return; }
 
 		server->send(200, "text/plain", (Update.hasError()) ? "Update: fail\n" : "Update: OK!\n");
 		delay(500);
